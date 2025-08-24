@@ -78,6 +78,7 @@ def texto_recomendacion(nivel):
 # ==============================
 st.title("¿En qué nivel de madurez de IA está su empresa?")
 st.caption("Evaluación rápida basada en el Modelo de Madurez de IA (Gartner).")
+st.caption("Al diligenciar este formulario, usted autoriza el tratamiento de sus datos personales conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013 de la República de Colombia..")
 
 with st.expander("Datos de contacto (obligatorios)"):
     email = st.text_input("Email *")
