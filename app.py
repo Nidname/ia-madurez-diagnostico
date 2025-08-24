@@ -154,7 +154,7 @@ if st.button("📊 Calcular y guardar resultado"):
             st.error("Por favor responde todas las preguntas.")
         else:
             st.markdown(
-                f"<h2 style='margin-top:8px;color:#2E86C1;'>Resultado: Nivel {nivel} – {etiqueta}</h2>",
+                f"<h2 style='margin-top:8px;color:#2E86C1;'>Resultado Madurez IA: Nivel {nivel} – {etiqueta}</h2>",
                 unsafe_allow_html=True
             )
             st.write(f"📌 {texto_recomendacion(nivel)}")
