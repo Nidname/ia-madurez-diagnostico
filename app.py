@@ -9,7 +9,7 @@ st.set_page_config(page_title="Diagnóstico de Madurez IA", layout="centered")
 # ==============================
 # CONFIGURACIÓN GOOGLE SHEETS
 # ==============================
-# Pega aquí la URL de tu hoja (la pestaña 1 será usada)
+# 👉 Pega aquí la URL de tu hoja (pestaña 1)
 SHEET_URL = "https://docs.google.com/spreadsheets/d/19pxY8QRy2Tsxkn1LsQSRg-efJ7h1KItEWcU0wCn8u6I/edit?gid=0#gid=0"
 
 SCOPE = [
@@ -19,7 +19,7 @@ SCOPE = [
 
 @st.cache_resource(show_spinner=False)
 def get_gs_client():
-    # Lee el bloque TOML: [gcp_service_account] ...
+    # Lee el bloque TOML [gcp_service_account] desde Secrets
     creds_dict = dict(st.secrets["gcp_service_account"])
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
     return gspread.authorize(creds)
@@ -29,7 +29,7 @@ def get_worksheet():
     client = get_gs_client()
     sh = client.open_by_url(SHEET_URL)
     ws = sh.sheet1  # primera pestaña
-    # Si la hoja está vacía, escribe cabecera
+    # Si está vacía, escribe cabeceras
     headers = [
         "timestamp","email","nombre","empresa","tamano_empleados","sector",
         "q1","q2","q3","q4","q5","q6","q7","nivel","etiqueta"
@@ -58,7 +58,6 @@ def calcular_nivel(letras):
     if len(letras) < 7:
         return None, "Faltan respuestas."
 
-    from collections import Counter
     cnt = Counter(letras)
     a = cnt.get("a",0); b = cnt.get("b",0); c = cnt.get("c",0); d = cnt.get("d",0)
     mayor = max(a,b,c,d)
@@ -92,10 +91,10 @@ def texto_recomendacion(nivel):
 st.title("¿En qué nivel de madurez de IA está su empresa?")
 st.caption("Evaluación rápida basada en el Modelo de Madurez de IA (Gartner).")
 
-with st.expander("Datos de contacto (opcional)"):
-    email = st.text_input("Email")
-    nombre = st.text_input("Nombres y Apellidos")
-    empresa = st.text_input("Empresa")
+with st.expander("Datos de contacto (obligatorios)"):
+    email = st.text_input("Email *")
+    nombre = st.text_input("Nombres y Apellidos *")
+    empresa = st.text_input("Empresa *")
     tam_emp = st.radio(
         "¿Cuál es el tamaño de la empresa por cantidad de empleados aproximadamente?",
         ["Menos de 10", "Entre 11 y 50", "Entre 51 y 250", "Más de 250"],
@@ -158,30 +157,47 @@ for i,(preg,ops) in enumerate(PREGUNTAS, start=1):
     st.divider()
 
 if st.button("📊 Calcular y guardar resultado"):
-    nivel, etiqueta = calcular_nivel(respuestas)
-    if not nivel:
-        st.error("Por favor responde todas las preguntas.")
+    # 1) Validar datos de contacto obligatorios
+    if not email or not nombre or not empresa:
+        st.error("❌ Por favor complete Email, Nombre y Empresa (son obligatorios).")
     else:
-        st.success(f"**Resultado: Nivel {nivel} – {etiqueta}**")
-        st.write(f"📌 {texto_recomendacion(nivel)}")
+        nivel, etiqueta = calcular_nivel(respuestas)
+        if not nivel:
+            st.error("Por favor responde todas las preguntas.")
+        else:
+            # 2) Resultado en letra grande
+            st.markdown(
+                f"<h2 style='margin-top:8px;color:#2E86C1;'>Resultado: Nivel {nivel} – {etiqueta}</h2>",
+                unsafe_allow_html=True
+            )
+            st.write(f"📌 {texto_recomendacion(nivel)}")
 
-        letras = [r.split(")")[0] for r in respuestas]
-        row = {
-            "timestamp": datetime.now().isoformat(timespec="seconds"),
-            "email": email or "",
-            "nombre": nombre or "",
-            "empresa": empresa or "",
-            "tamano_empleados": tam_emp or "",
-            "sector": sector if sector != "Selecciona..." else "",
-            "q1": letras[0], "q2": letras[1], "q3": letras[2],
-            "q4": letras[3], "q5": letras[4], "q6": letras[5], "q7": letras[6],
-            "nivel": nivel, "etiqueta": etiqueta
-        }
-        try:
-            guardar_respuesta_en_sheets(row)
-            st.info("✅ Respuesta guardada en Google Sheets.")
-        except Exception as e:
-            st.error(f"❌ No se pudo guardar en Google Sheets: {e}. "
-                     "Verifica que compartiste la hoja con la cuenta de servicio y que la URL es correcta.")
+            # 3) Guardar en Google Sheets
+            letras = [r.split(')')[0] for r in respuestas]
+            row = {
+                "timestamp": datetime.now().isoformat(timespec="seconds"),
+                "email": email,
+                "nombre": nombre,
+                "empresa": empresa,
+                "tamano_empleados": tam_emp or "",
+                "sector": sector if sector != "Selecciona..." else "",
+                "q1": letras[0], "q2": letras[1], "q3": letras[2],
+                "q4": letras[3], "q5": letras[4], "q6": letras[5], "q7": letras[6],
+                "nivel": nivel, "etiqueta": etiqueta
+            }
+            try:
+                guardar_respuesta_en_sheets(row)
+                st.info("✅ Respuesta guardada en Google Sheets.")
+            except Exception as e:
+                st.error(f"❌ No se pudo guardar en Google Sheets: {e}. "
+                         "Verifique que compartió la hoja con la cuenta de servicio y que la URL es correcta.")
+
+            # 4) Mensaje de agradecimiento
+            st.markdown(
+                f"<p style='margin-top:12px;font-size:18px;'>"
+                f"Gracias, <strong>{nombre}</strong>, por participar en el diagnóstico. "
+                f"Nos pondremos en contacto con <strong>{email}</strong> si desea recibir el informe detallado.</p>",
+                unsafe_allow_html=True
+            )
 
 st.caption("Basado en el Modelo de Madurez de IA de Gartner.")
