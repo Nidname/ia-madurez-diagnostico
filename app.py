@@ -181,7 +181,7 @@ if st.button("📊 Calcular y guardar resultado"):
             st.markdown(
                 f"<p style='margin-top:12px;font-size:18px;'>"
                 f"Gracias, <strong>{nombre}</strong>, por participar en el diagnóstico. "
-                f"Nos pondremos en contacto con <strong>{email}</strong> una sesion de  1 hora de consuloria de levantamiento de informacion inical GRATUITA."
+                f"Nos pondremos en contacto con <strong>{email}</strong> para agendar una sesion de  1 hora de consuloria de levantamiento de informacion inicial <strong>GRATUITA</strong>."
                 f"</p>",
                 unsafe_allow_html=True
             )
