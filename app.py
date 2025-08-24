@@ -27,24 +27,10 @@ def append_row(row_dict):
     df = pd.concat([df, pd.DataFrame([row_dict])], ignore_index=True)
     df.to_csv(CSV_PATH, index=False, encoding="utf-8-sig")
 
-def load_data():
-    init_csv()
-    return pd.read_csv(CSV_PATH)
-
 # =========================================
 # Lógica de evaluación
 # =========================================
 def calcular_nivel(letras):
-    """
-    Regla (según tu rúbrica):
-      - Mayoría 'a' => Nivel 1 Conciencia
-      - Mayoría 'b' => Nivel 2 Activo
-      - Mayoría 'c' => Nivel 3 Operacional
-      - Mayoría 'd' o combinación 'd' + 'c':
-         * si d >= c => Nivel 5 Transformacional
-         * si c > d  => Nivel 4 Sistemático
-    En empate, favorece el nivel más alto entre letras empatadas.
-    """
     letras = [r.split(")")[0] for r in letras if r]
     if len(letras) < 7:
         return None, "Faltan respuestas."
@@ -59,8 +45,7 @@ def calcular_nivel(letras):
         else:
             return 4, "Sistemático"
     elif c == mayor:
-        # promoción a 4 si c+d domina y hay d
-        if (c + d) >= 4 and d > 0:   # 4 de 7 ~ 57% (ajustable)
+        if (c + d) >= 4 and d > 0:
             return 4, "Sistemático"
         return 3, "Operacional"
     elif b == mayor:
@@ -154,7 +139,7 @@ if st.button("📊 Calcular y guardar resultado"):
         st.error("Por favor responde todas las preguntas.")
     else:
         st.success(f"**Resultado: Nivel {nivel} – {etiqueta}**")
-        st.write(texto_recomendacion(nivel))
+        st.write(f"📌 {texto_recomendacion(nivel)}")
 
         # Guardar en CSV
         letras = [r.split(")")[0] for r in respuestas]
@@ -170,14 +155,7 @@ if st.button("📊 Calcular y guardar resultado"):
             "nivel": nivel, "etiqueta": etiqueta
         }
         append_row(row)
-        st.success("✅ Respuesta guardada en 'respuestas_madurez_ia.csv'.")
-
-        # Mostrar distribución acumulada (gráfico)
-        df = load_data()
-        conteo = df["nivel"].value_counts().sort_index()
-        st.subheader("Niveles acumulados (todas las respuestas)")
-        st.bar_chart(conteo, use_container_width=True)
-        st.caption("Cada barra representa cuántos participantes han quedado en cada nivel.")
+        st.info("✅ Respuesta guardada en 'respuestas_madurez_ia.csv'.")
 
 # Panel admin opcional
 with st.expander("🛠️ Opciones (organizador)"):
