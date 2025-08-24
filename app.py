@@ -7,11 +7,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 st.set_page_config(page_title="Diagnóstico de Madurez IA", layout="centered")
 
 # ==============================
-# CONFIGURACIÓN GOOGLE SHEETS
+# GOOGLE SHEETS
 # ==============================
-# 👉 Pega aquí la URL de tu hoja (pestaña 1)
 SHEET_URL = "https://docs.google.com/spreadsheets/d/19pxY8QRy2Tsxkn1LsQSRg-efJ7h1KItEWcU0wCn8u6I/edit?gid=0#gid=0"
-
 SCOPE = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/drive",
@@ -19,24 +17,20 @@ SCOPE = [
 
 @st.cache_resource(show_spinner=False)
 def get_gs_client():
-    # Lee el bloque TOML [gcp_service_account] desde Secrets
-    creds_dict = dict(st.secrets["gcp_service_account"])
+    creds_dict = dict(st.secrets["gcp_service_account"])  # <- secrets TOML
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
     return gspread.authorize(creds)
 
 @st.cache_resource(show_spinner=False)
 def get_worksheet():
-    client = get_gs_client()
-    sh = client.open_by_url(SHEET_URL)
-    ws = sh.sheet1  # primera pestaña
-    # Si está vacía, escribe cabeceras
+    sh = get_gs_client().open_by_url(SHEET_URL)
+    ws = sh.sheet1
     headers = [
         "timestamp","email","nombre","empresa","tamano_empleados","sector",
         "q1","q2","q3","q4","q5","q6","q7","nivel","etiqueta"
     ]
     try:
-        current = ws.get_all_values()
-        if not current:
+        if not ws.get_all_values():
             ws.append_row(headers, value_input_option="USER_ENTERED")
     except Exception:
         pass
@@ -51,7 +45,7 @@ def guardar_respuesta_en_sheets(row_dict):
     ws.append_row(fila, value_input_option="USER_ENTERED")
 
 # ==============================
-# LÓGICA DE EVALUACIÓN
+# LÓGICA
 # ==============================
 def calcular_nivel(letras):
     letras = [r.split(")")[0] for r in letras if r]
@@ -63,18 +57,12 @@ def calcular_nivel(letras):
     mayor = max(a,b,c,d)
 
     if d == mayor:
-        if d >= c:
-            return 5, "Transformacional"
-        else:
-            return 4, "Sistemático"
-    elif c == mayor:
-        if (c + d) >= 4 and d > 0:
-            return 4, "Sistemático"
-        return 3, "Operacional"
-    elif b == mayor:
-        return 2, "Activo"
-    else:
-        return 1, "Conciencia"
+        return (5, "Transformacional") if d >= c else (4, "Sistemático")
+    if c == mayor:
+        return (4, "Sistemático") if (c + d) >= 4 and d > 0 else (3, "Operacional")
+    if b == mayor:
+        return (2, "Activo")
+    return (1, "Conciencia")
 
 def texto_recomendacion(nivel):
     return {
@@ -157,7 +145,7 @@ for i,(preg,ops) in enumerate(PREGUNTAS, start=1):
     st.divider()
 
 if st.button("📊 Calcular y guardar resultado"):
-    # 1) Validar datos de contacto obligatorios
+    # Validación de contacto obligatorio (NO cambia nada más)
     if not email or not nombre or not empresa:
         st.error("❌ Por favor complete Email, Nombre y Empresa (son obligatorios).")
     else:
@@ -165,14 +153,14 @@ if st.button("📊 Calcular y guardar resultado"):
         if not nivel:
             st.error("Por favor responde todas las preguntas.")
         else:
-            # 2) Resultado en letra grande
+            # Resultado grande
             st.markdown(
                 f"<h2 style='margin-top:8px;color:#2E86C1;'>Resultado: Nivel {nivel} – {etiqueta}</h2>",
                 unsafe_allow_html=True
             )
             st.write(f"📌 {texto_recomendacion(nivel)}")
 
-            # 3) Guardar en Google Sheets
+            # Guardar
             letras = [r.split(')')[0] for r in respuestas]
             row = {
                 "timestamp": datetime.now().isoformat(timespec="seconds"),
@@ -192,11 +180,12 @@ if st.button("📊 Calcular y guardar resultado"):
                 st.error(f"❌ No se pudo guardar en Google Sheets: {e}. "
                          "Verifique que compartió la hoja con la cuenta de servicio y que la URL es correcta.")
 
-            # 4) Mensaje de agradecimiento
+            # Agradecimiento
             st.markdown(
                 f"<p style='margin-top:12px;font-size:18px;'>"
                 f"Gracias, <strong>{nombre}</strong>, por participar en el diagnóstico. "
-                f"Nos pondremos en contacto con <strong>{email}</strong> si desea recibir el informe detallado.</p>",
+                f"Nos pondremos en contacto con <strong>{email}</strong> si desea el informe detallado."
+                f"</p>",
                 unsafe_allow_html=True
             )
 
