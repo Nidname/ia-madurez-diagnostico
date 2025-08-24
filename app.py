@@ -9,7 +9,7 @@ st.set_page_config(page_title="Diagnóstico de Madurez IA", layout="centered")
 # ==============================
 # GOOGLE SHEETS
 # ==============================
-SHEET_URL = "https://docs.google.com/spreadsheets/d/TU_ID_DE_HOJA/edit#gid=0"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/19pxY8QRy2Tsxkn1LsQSRg-efJ7h1KItEWcU0wCn8u6I/edit?gid=0#gid=0"
 SCOPE = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/drive",
