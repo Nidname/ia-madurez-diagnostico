@@ -78,7 +78,6 @@ def texto_recomendacion(nivel):
 # ==============================
 st.title("¿En qué nivel de madurez de IA está su empresa?")
 st.caption("Evaluación rápida basada en el Modelo de Madurez de IA (Gartner).")
-st.caption("Al diligenciar este formulario, usted autoriza el tratamiento de sus datos personales conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013 de la República de Colombia..")
 
 with st.expander("Datos de contacto (obligatorios)"):
     email = st.text_input("Email *")
@@ -170,7 +169,7 @@ if st.button("📊 Calcular y guardar resultado"):
                 "sector": sector,
                 "q1": letras[0], "q2": letras[1], "q3": letras[2],
                 "q4": letras[3], "q5": letras[4], "q6": letras[5], "q7": letras[6],
-                 "nivel_etiqueta": f"{nivel} - {etiqueta}"
+                "nivel": nivel, "etiqueta": etiqueta
             }
             try:
                 guardar_respuesta_en_sheets(row)
@@ -182,7 +181,7 @@ if st.button("📊 Calcular y guardar resultado"):
             st.markdown(
                 f"<p style='margin-top:12px;font-size:18px;'>"
                 f"Gracias, <strong>{nombre}</strong>, por participar en el diagnóstico. "
-                f"Nos pondremos en contacto con <strong>{email}</strong> para agendar una sesion de  1 hora de consuloria de levantamiento de informacion inicial <strong>GRATUITA</strong>."
+                f"Nos pondremos en contacto con <strong>{email}</strong> si desea el informe detallado."
                 f"</p>",
                 unsafe_allow_html=True
             )
