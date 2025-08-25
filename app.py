@@ -170,7 +170,7 @@ if st.button("📊 Calcular y guardar resultado"):
                 "sector": sector,
                 "q1": letras[0], "q2": letras[1], "q3": letras[2],
                 "q4": letras[3], "q5": letras[4], "q6": letras[5], "q7": letras[6],
-                "nivel": nivel, "etiqueta": etiqueta
+                "nivel_etiqueta": f"{nivel} – {etiqueta}"
             }
             try:
                 guardar_respuesta_en_sheets(row)
